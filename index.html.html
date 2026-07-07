@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HU-SE · Painel UTI Cirúrgica — SRAS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600&display=swap');
+:root{
+  --bg:#0B0F1A;--bg2:#111827;--bg3:#1A2235;--card:#1E293B;--card2:#243447;
+  --teal:#00D4AA;--danger:#FF4D6D;--amber:#FFB347;--blue:#4A9EFF;--purple:#A78BFA;
+  --teal-d:rgba(0,212,170,.12);--danger-d:rgba(255,77,109,.12);
+  --amber-d:rgba(255,179,71,.12);--blue-d:rgba(74,158,255,.12);
+  --text:#F1F5F9;--text2:#94A3B8;--text3:#64748B;
+  --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.10);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;min-height:100vh}
+
+/* HEADER */
+.header{background:var(--bg2);border-bottom:1px solid var(--border2);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:12px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--teal);box-shadow:0 0 10px var(--teal);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.5)}}
+.htitle{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600}
+.hsub{font-size:10px;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
+.hbadges{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.hb{font-size:10px;font-weight:600;padding:4px 10px;border-radius:20px;letter-spacing:.3px;text-transform:uppercase}
+.hb.r{background:var(--danger-d);border:1px solid rgba(255,77,109,.25);color:var(--danger)}
+.hb.g{background:var(--teal-d);border:1px solid rgba(0,212,170,.25);color:var(--teal)}
+.hb.a{background:var(--amber-d);border:1px solid rgba(255,179,71,.25);color:var(--amber)}
+.hdate{font-size:11px;color:var(--text3)}
+
+/* MAIN */
+.main{padding:22px 28px;max-width:1480px;margin:0 auto}
+
+/* TABS */
+.tabrow{display:flex;gap:3px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:20px;flex-wrap:wrap}
+.tbtn{flex:1;min-width:90px;padding:7px 10px;font-size:11px;font-weight:500;background:transparent;border:none;border-radius:7px;color:var(--text3);cursor:pointer;transition:all .2s;white-space:nowrap;text-align:center}
+.tbtn.on{background:var(--card2);color:var(--text)}
+.tsec{display:none}.tsec.on{display:block}
+
+/* KPI */
+.krow{display:grid;gap:10px;margin-bottom:16px}
+.k4{grid-template-columns:repeat(4,1fr)}.k3{grid-template-columns:repeat(3,1fr)}.k5{grid-template-columns:repeat(5,1fr)}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:10px 10px 0 0}
+.kpi.t::before{background:linear-gradient(90deg,var(--teal),transparent)}
+.kpi.d::before{background:linear-gradient(90deg,var(--danger),transparent)}
+.kpi.a::before{background:linear-gradient(90deg,var(--amber),transparent)}
+.kpi.b::before{background:linear-gradient(90deg,var(--blue),transparent)}
+.kl{font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-bottom:8px}
+.kv{font-family:'Space Grotesk',sans-serif;font-size:34px;font-weight:300;line-height:1}
+.kpi.t .kv{color:var(--teal)}.kpi.d .kv{color:var(--danger)}.kpi.a .kv{color:var(--amber)}.kpi.b .kv{color:var(--blue)}
+.ks{font-size:11px;color:var(--text2);margin-top:5px;line-height:1.4}
+.kb{position:absolute;top:14px;right:14px;font-size:9px;font-weight:600;padding:3px 7px;border-radius:10px}
+.kb.r{background:var(--danger-d);color:var(--danger)}.kb.g{background:var(--teal-d);color:var(--teal)}.kb.a{background:var(--amber-d);color:var(--amber)}
+
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:12px}
+.ctitle{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text);margin-bottom:3px}
+.csub{font-size:11px;color:var(--text3);margin-bottom:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px}
+
+/* CHART */
+.cw{position:relative;width:100%}
+.h160{height:160px}.h200{height:200px}.h240{height:240px}.h280{height:280px}.h320{height:320px}.h360{height:360px}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);padding:7px 10px;border-bottom:1px solid var(--border);text-align:left;font-weight:500;background:var(--bg3)}
+td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02);color:var(--text)}
+.tag{display:inline-block;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;white-space:nowrap}
+.tag.r{background:var(--danger-d);color:var(--danger)}.tag.g{background:var(--teal-d);color:var(--teal)}
+.tag.a{background:var(--amber-d);color:var(--amber)}.tag.b{background:var(--blue-d);color:var(--blue)}
+.tag.p{background:rgba(167,139,250,.15);color:var(--purple)}.tag.gr{background:rgba(255,255,255,.06);color:var(--text3)}
+
+/* SEMÁFORO */
+.smf{display:flex;flex-direction:column;gap:7px}
+.smf-row{display:flex;align-items:center;gap:10px;padding:9px 13px;background:var(--bg3);border-radius:7px;border-left:3px solid}
+.smf-row.verde{border-color:var(--teal)}.smf-row.amarelo{border-color:var(--amber)}.smf-row.vermelho{border-color:var(--danger)}
+.smf-l{flex:1;font-size:12px;color:var(--text2)}
+.smf-v{font-size:13px;font-weight:600;min-width:80px;text-align:right}
+.smf-m{font-size:10px;color:var(--text3);min-width:120px;text-align:right}
+.smf-p{font-size:11px;font-weight:600;min-width:55px;text-align:right}
+
+/* MINI BAR */
+.mbar{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.mbar-l{font-size:11px;color:var(--text2);width:140px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mbar-t{flex:1;height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden}
+.mbar-f{height:100%;border-radius:3px}
+.mbar-v{font-size:11px;color:var(--text2);width:30px;text-align:right}
+
+/* BOX */
+.box{padding:12px 16px;border-radius:8px;margin-bottom:8px;border-left:3px solid}
+.box.r{background:rgba(255,77,109,.07);border-color:var(--danger)}
+.box.a{background:rgba(255,179,71,.07);border-color:var(--amber)}
+.box.g{background:rgba(0,212,170,.07);border-color:var(--teal)}
+.box .bt{font-size:11px;font-weight:600;margin-bottom:3px}
+.box.r .bt{color:var(--danger)}.box.a .bt{color:var(--amber)}.box.g .bt{color:var(--teal)}
+.box .bd{font-size:12px;color:var(--text2);line-height:1.6}
+
+/* LEITO */
+.leito-grid{display:grid;gap:8px}
+.leito{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:10px;text-align:center}
+.leito.inv{border-color:rgba(255,77,109,.4);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{border-color:rgba(255,77,109,.4)}50%{border-color:rgba(255,77,109,.9)}}
+.ln{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-bottom:3px}
+.lp{font-size:10px;font-weight:500;color:var(--text);margin-bottom:4px;line-height:1.3}
+.lt{font-size:9px;padding:1px 5px;border-radius:8px;font-weight:600;display:inline-block}
+.lt.cir{background:var(--teal-d);color:var(--teal)}.lt.clin{background:var(--danger-d);color:var(--danger)}.lt.sig{background:var(--blue-d);color:var(--blue)}
+.ld{font-size:9px;color:var(--text3);margin-top:3px}
+
+/* SCROLL */
+.scroll{overflow-y:auto}.scroll::-webkit-scrollbar{width:3px}.scroll::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* FOOTER */
+.footer{background:var(--bg2);border-top:1px solid var(--border);padding:12px 28px;display:flex;justify-content:space-between;margin-top:40px}
+.footer p{font-size:10px;color:var(--text3)}
+
+@media(max-width:900px){.k4,.k5{grid-template-columns:repeat(2,1fr)}.grid2,.grid3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    <div class="dot"></div>
+    <div>
+      <div class="htitle">HU-SE · Painel UTI Cirúrgica — SRAS / NUCAAR</div>
+      <div class="hsub">Hospital Universitário de Sergipe · EBSERH · Abr–Jun/2026</div>
+    </div>
+  </div>
+  <div class="hbadges">
+    <span class="hb r">UTI cirúrgica em colapso</span>
+    <span class="hb r">13 oncos frustradas</span>
+    <span class="hb g">26/06/2026 · SRAS Thais</span>
+  </div>
+</header>
+
+<div class="main">
+<div class="tabrow">
+  <button class="tbtn on" onclick="st('resumo')">Resumo</button>
+  <button class="tbtn" onclick="st('semanas')">Por semana</button>
+  <button class="tbtn" onclick="st('suspensoes')">Suspensões</button>
+  <button class="tbtn" onclick="st('leitos')">Leitos UTI</button>
+  <button class="tbtn" onclick="st('rastreio')">Rastreabilidade</button>
+  <button class="tbtn" onclick="st('analise')">Análise avançada</button>
+  <button class="tbtn" onclick="st('acoes')">Plano de ação</button>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ABA 1 — RESUMO
+══════════════════════════════════════════════ -->
+<div class="tsec on" id="tab-resumo">
+
+  <div class="krow k4">
+    <div class="kpi b">
+      <div class="kl">Total planejadas com X UTI</div>
+      <div class="kv">87</div>
+      <div class="ks">Bate Mapas 31/03 a 29/06/2026 · 12 semanas</div>
+    </div>
+    <div class="kpi t">
+      <div class="kl">Realizadas com sucesso</div>
+      <div class="kv">58</div>
+      <div class="ks">67% de execução no período</div>
+      <span class="kb g">67%</span>
+    </div>
+    <div class="kpi d">
+      <div class="kl">Suspensas total</div>
+      <div class="kv">29</div>
+      <div class="ks">33% — greve (14%) + falta UTI (13%) + outros (6%)</div>
+      <span class="kb r">33%</span>
+    </div>
+    <div class="kpi a">
+      <div class="kl">Média por dia operacional</div>
+      <div class="kv">2,2</div>
+      <div class="ks">cirurgias com UTI por dia com CC ativo</div>
+      <span class="kb a">abaixo de 3</span>
+    </div>
+  </div>
+
+  <!-- Diagnóstico central -->
+  <div style="background:linear-gradient(135deg,rgba(255,77,109,.09),rgba(255,179,71,.05));border:1px solid rgba(255,77,109,.25);border-radius:10px;padding:20px 24px;margin-bottom:14px;display:flex;align-items:center;gap:20px">
+    <div style="font-size:32px">🔴</div>
+    <div>
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:400;color:var(--text);margin-bottom:6px">
+        Não precisamos de mais leitos de UTI.<br>
+        <span style="color:var(--teal)">Precisamos recuperar os 4 que já temos.</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2)">Os 4 leitos internos pós-cirúrgicos estão cronicamente bloqueados por pacientes clínicos sem protocolo de devolução. Em junho/2026, 3 dos 4 leitos estavam ocupados por clínicos há mais de 5 dias cada — causando 11 suspensões de causa estrutural.</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="ctitle">Resultado por semana de Bate Mapa</div>
+      <div class="csub">Planejadas com X UTI vs realizadas vs suspensas · 12 semanas</div>
+      <div class="cw h280"><canvas id="c_res_sem"></canvas></div>
+      <div style="display:flex;gap:14px;margin-top:8px;font-size:11px;color:var(--text2)">
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:4px;background:var(--blue);display:inline-block;border-radius:2px"></span>Planejadas</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:4px;background:var(--teal);display:inline-block;border-radius:2px"></span>Realizadas</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:4px;background:var(--danger);display:inline-block;border-radius:2px"></span>Susp. greve</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:4px;background:var(--amber);display:inline-block;border-radius:2px"></span>Susp. sem UTI</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Distribuição dos desfechos</div>
+      <div class="csub">87 cirurgias com X UTI · abr–jun/2026</div>
+      <div class="cw h240"><canvas id="c_pizza"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid3">
+    <div class="kpi d" style="margin:0">
+      <div class="kl">Leitos cirúrgicos bloqueados hoje</div>
+      <div class="kv">3/4</div>
+      <div class="ks">Clínicos em leito pós-op cirúrgico — jun/26</div>
+    </div>
+    <div class="kpi d" style="margin:0">
+      <div class="kl">Casos oncológicos frustrados</div>
+      <div class="kv">13</div>
+      <div class="ks">Identificados abr–jun/2026 com rastreabilidade aberta</div>
+    </div>
+    <div class="kpi d" style="margin:0">
+      <div class="kl">Semana mais crítica</div>
+      <div class="kv">09/06</div>
+      <div class="ks">4 de 4 cirurgias c/ UTI não realizadas por falta de leito</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ABA 2 — POR SEMANA
+══════════════════════════════════════════════ -->
+<div class="tsec" id="tab-semanas">
+
+  <div class="card">
+    <div class="ctitle">Demanda de UTI por semana de Bate Mapa — dado a dado</div>
+    <div class="csub">Cada linha = 1 semana · extraído dos bate mapas 31/03 a 29/06/2026 · X na coluna UTI</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Semana</th>
+          <th style="text-align:center">Planejadas<br>(X UTI)</th>
+          <th style="text-align:center">Realizadas</th>
+          <th style="text-align:center">Susp.<br>Greve</th>
+          <th style="text-align:center">Susp.<br>Sem UTI</th>
+          <th style="text-align:center">Susp.<br>Outros</th>
+          <th style="text-align:center">Taxa<br>realização</th>
+          <th>Destaque da semana</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>31/03 – 06/04</strong></td>
+          <td style="text-align:center"><strong>5</strong></td>
+          <td style="text-align:center;color:var(--teal)">2</td>
+          <td style="text-align:center;color:var(--danger)">2</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center;color:var(--text3)">1</td>
+          <td style="text-align:center"><span class="tag r">40%</span></td>
+          <td style="font-size:11px">Início da greve · Tireoidectomia e Endometriose suspensas ATM · Histerectomia por cond. clínica</td>
+        </tr>
+        <tr>
+          <td><strong>07/04 – 13/04</strong></td>
+          <td style="text-align:center"><strong>3</strong></td>
+          <td style="text-align:center;color:var(--teal)">2</td>
+          <td style="text-align:center;color:var(--danger)">1</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center"><span class="tag a">67%</span></td>
+          <td style="font-size:11px">08/04 quarta-feira — dia de greve total no CC · nenhuma cirurgia operou</td>
+        </tr>
+        <tr>
+          <td><strong>14/04 – 20/04</strong></td>
+          <td style="text-align:center"><strong>5</strong></td>
+          <td style="text-align:center;color:var(--teal)">4</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center;color:var(--danger)">1</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center"><span class="tag a">80%</span></td>
+          <td style="font-size:11px">Incontinência urinária (P:4064267) suspensa 16/04 por falta UTI · remarcada 23/04</td>
+        </tr>
+        <tr>
+          <td><strong>21/04 – 27/04</strong></td>
+          <td style="text-align:center"><strong>3</strong></td>
+          <td style="text-align:center;color:var(--teal)">3</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center"><span class="tag g">100%</span></td>
+          <td style="font-size:11px">Melhor semana do período · Colectomia + Hepatectomia + Laringectomia todas realizadas</td>
+        </tr>
+        <tr>
+          <td><strong>28/04 – 04/05</strong></td>
+          <td style="text-align:center"><strong>6</strong></td>
+          <td style="text-align:center;color:var(--teal)">4</td>
+          <td style="text-align:center;color:var(--danger)">2</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center"><span class="tag a">67%</span></td>
+          <td style="font-size:11px">2 VHDs (P:9748062/9766049) suspensas por ATM anestesista · 3 Hernioplastia+Colpoperineoplastia realizadas</td>
+        </tr>
+        <tr>
+          <td><strong>05/05 – 11/05</strong></td>
+          <td style="text-align:center"><strong>3</strong></td>
+          <td style="text-align:center;color:var(--teal)">2</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center;color:var(--danger)">1</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center"><span class="tag a">67%</span></td>
+          <td style="font-size:11px">★ Enteroanastomose P:9279951 — 1ª não realização · X UTI planejado · sem leito disponível</td>
+        </tr>
+        <tr>
+          <td><strong>12/05 – 18/05</strong></td>
+          <td style="text-align:center"><strong>8</strong></td>
+          <td style="text-align:center;color:var(--teal)">6</td>
+          <td style="text-align:center;color:var(--danger)">1</td>
+          <td style="text-align:center;color:var(--danger)">1</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center"><span class="tag a">75%</span></td>
+          <td style="font-size:11px">Semana mais movimentada · 8 X UTI · Enteroanastomose 2ª tentativa frustrada · Sinusotomia suspensa</td>
+        </tr>
+        <tr>
+          <td><strong>19/05 – 25/05</strong></td>
+          <td style="text-align:center"><strong>3</strong></td>
+          <td style="text-align:center;color:var(--teal)">2</td>
+          <td style="text-align:center;color:var(--danger)">1</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center"><span class="tag a">67%</span></td>
+          <td style="font-size:11px">Toracoscopia suspensa por greve · anestesistas M=3 (mínimo da semana)</td>
+        </tr>
+        <tr>
+          <td><strong>26/05 – 01/06</strong></td>
+          <td style="text-align:center"><strong>8</strong></td>
+          <td style="text-align:center;color:var(--teal)">7</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center;color:var(--danger)">1</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center"><span class="tag a">88%</span></td>
+          <td style="font-size:11px">Semana do mutirão (sáb. 30/05 · M=7) · 8 X UTI · Enteroanastomose 3ª tentativa · sem leito</td>
+        </tr>
+        <tr style="background:rgba(255,77,109,.06)">
+          <td><strong style="color:var(--danger)">09/06 – 15/06 ⚠</strong></td>
+          <td style="text-align:center"><strong style="color:var(--danger)">4</strong></td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center;color:var(--danger);font-weight:700">4</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center"><span class="tag r">0%</span></td>
+          <td style="font-size:11px;color:var(--danger)"><strong>PIOR SEMANA:</strong> 4/4 cirurgias com UTI frustradas por falta de leito · Edson, João Marcos, Greice Anne, Maria da Conceição (paciente saiu)</td>
+        </tr>
+        <tr>
+          <td><strong>16/06 – 22/06</strong></td>
+          <td style="text-align:center"><strong>5</strong></td>
+          <td style="text-align:center;color:var(--teal)">4</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center;color:var(--danger)">1</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center"><span class="tag a">80%</span></td>
+          <td style="font-size:11px">Prostatectomia oncológica (P:0126951/3) 2ª+ remarcação · sem leito UTI</td>
+        </tr>
+        <tr>
+          <td><strong>23/06 – 29/06</strong></td>
+          <td style="text-align:center"><strong>3</strong></td>
+          <td style="text-align:center;color:var(--teal)">3</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center;color:var(--text3)">0</td>
+          <td style="text-align:center"><span class="tag g">100%</span></td>
+          <td style="font-size:11px">Retossigmoidectomia onco + Timectomia + Mastoidectomia todas realizadas</td>
+        </tr>
+        <tr style="font-weight:600;background:rgba(255,255,255,.03)">
+          <td>TOTAL 12 semanas</td>
+          <td style="text-align:center;color:var(--blue)">87</td>
+          <td style="text-align:center;color:var(--teal)">58 (67%)</td>
+          <td style="text-align:center;color:var(--danger)">7 (8%)</td>
+          <td style="text-align:center;color:var(--amber)">11 (13%)</td>
+          <td style="text-align:center;color:var(--text3)">6 (7%)</td>
+          <td style="text-align:center"><span class="tag a">67%</span></td>
+          <td style="font-size:11px">Semana 09/06 = colapso total · 21/04 e 23/06 = únicas com 100%</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="ctitle">Suspensas por falta de UTI — evolução semanal</div>
+      <div class="csub">Causa estrutural · piora progressiva de maio para junho</div>
+      <div class="cw h220"><canvas id="c_uti_sem"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Suspensas por greve — por semana</div>
+      <div class="csub">Causa temporária · concentrada em abril e maio</div>
+      <div class="cw h220"><canvas id="c_greve_sem"></canvas></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ABA 3 — SUSPENSÕES
+══════════════════════════════════════════════ -->
+<div class="tsec" id="tab-suspensoes">
+
+  <div class="krow k4">
+    <div class="kpi d"><div class="kl">Total suspensas</div><div class="kv">29</div><div class="ks">de 87 planejadas (33%)</div></div>
+    <div class="kpi d"><div class="kl">Por greve (temporário)</div><div class="kv">12</div><div class="ks">14% · voltam quando greve acabar</div><span class="kb a">temporário</span></div>
+    <div class="kpi d"><div class="kl">Por falta UTI (estrutural)</div><div class="kv">11</div><div class="ks">13% · NÃO voltam sem protocolo</div><span class="kb r">estrutural</span></div>
+    <div class="kpi a"><div class="kl">Outros motivos</div><div class="kv">6</div><div class="ks">cond. clínica, ausência cirurgião, OPME</div></div>
+  </div>
+
+  <div style="background:var(--bg3);border-radius:10px;padding:16px 20px;margin-bottom:14px;border-left:4px solid var(--danger)">
+    <div style="font-size:11px;font-weight:600;color:var(--danger);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Distinção crítica para a gestão</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.7">
+      As <strong style="color:var(--amber)">12 suspensões por greve</strong> são temporárias — quando a greve acabar, essas cirurgias voltam ao mapa automaticamente.<br>
+      As <strong style="color:var(--danger)">11 por falta de leito UTI</strong> são <strong style="color:var(--danger)">estruturais</strong> — sem protocolo de devolução de leito, continuarão acontecendo mesmo com o CC em plena capacidade.
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="ctitle">Suspensões por falta de leito UTI — detalhamento completo (causa estrutural)</div>
+    <div class="csub">Casos confirmados onde X UTI estava planejado e cirurgia não ocorreu por ausência de leito pós-op</div>
+    <div class="scroll" style="max-height:420px">
+    <table>
+      <thead><tr><th>#</th><th>Semana</th><th>Data</th><th>Cirurgião</th><th>Procedimento / Prontuário</th><th>Espec.</th><th>Evidência</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr style="background:rgba(255,77,109,.07)">
+          <td style="color:var(--danger);font-size:16px;font-weight:700">★</td>
+          <td><span class="tag r">4 semanas</span></td>
+          <td style="color:var(--danger);font-weight:600">05/05<br>12/05<br>27/05<br>10/06</td>
+          <td>Alex / Rodrigo</td>
+          <td><strong>Enteroanastomose EM ONCOLOGIA</strong><br><span style="font-size:10px;color:var(--text3)">P: 9279951</span></td>
+          <td><span class="tag r">Digestiva</span></td>
+          <td style="font-size:11px;color:var(--danger)">X UTI em todo Bate Mapa · 4 semanas · nunca teve leito disponível</td>
+          <td><span class="tag r">5 sem. em aberto</span></td>
+        </tr>
+        <tr><td>1</td><td>14/04–20/04</td><td>16/04→23/04</td><td>Daniela</td><td>Incontinência Urinária<br><span style="font-size:10px;color:var(--text3)">P: 4064267</span></td><td><span class="tag b">GO</span></td><td style="font-size:11px">Suspensa 16/04 · leito liberou · realizada 23/04</td><td><span class="tag g">Realizada 23/04</span></td></tr>
+        <tr><td>2</td><td>05/05–11/05</td><td>05/05</td><td>Alex / Rodrigo</td><td>Enteroanastomose (1ª tentativa)<br><span style="font-size:10px;color:var(--text3)">P: 9279951</span></td><td><span class="tag r">Digestiva</span></td><td style="font-size:11px">1ª vez sem leito · X UTI no mapa</td><td><span class="tag r">Frustrada</span></td></tr>
+        <tr><td>3</td><td>12/05–18/05</td><td>12/05</td><td>Alex / Rodrigo</td><td>Enteroanastomose (2ª tentativa)<br><span style="font-size:10px;color:var(--text3)">P: 9279951</span></td><td><span class="tag r">Digestiva</span></td><td style="font-size:11px">2ª vez sem leito · Estevão/Maria Carmem bloqueando</td><td><span class="tag r">Frustrada</span></td></tr>
+        <tr><td>4</td><td>26/05–01/06</td><td>27/05</td><td>Alex / Rodrigo</td><td>Enteroanastomose (3ª tentativa)<br><span style="font-size:10px;color:var(--text3)">P: 9279951</span></td><td><span class="tag r">Digestiva</span></td><td style="font-size:11px">Semana do mutirão · mesmo com M=7 sábado · sem leito</td><td><span class="tag r">Frustrada</span></td></tr>
+        <tr><td>5</td><td>09/06–15/06</td><td>01/06</td><td>Valter</td><td>Retossigmoidectomia EM ONCOLOGIA<br><span style="font-size:10px;color:var(--text3)">P: 98973/1 · Edson de Jesus</span></td><td><span class="tag r">Digestiva</span></td><td style="font-size:11px">Sem leito · clínicos bloqueando os 4 leitos</td><td><span class="tag a">Aguarda vaga</span></td></tr>
+        <tr><td>6</td><td>09/06–15/06</td><td>08/06</td><td>Isadora / Arli</td><td>Tireoidectomia Total EM ONCOLOGIA<br><span style="font-size:10px;color:var(--text3)">P: 1023634/7 · João Marcos Bispo</span></td><td><span class="tag b">CP</span></td><td style="font-size:11px">Sem leito cirúrgico · 3 de 4 bloqueados</td><td><span class="tag a">Aguarda remarcação</span></td></tr>
+        <tr><td>7</td><td>09/06–15/06</td><td>11/06</td><td>Isadora / Arli</td><td>Tireoidectomia c/ Esvaziamento Ganglionar<br><span style="font-size:10px;color:var(--text3)">P: 909162/0 · Greice Anne Fiel</span></td><td><span class="tag b">CP</span></td><td style="font-size:11px">Sem leito UTI pós-op</td><td><span class="tag a">Pendente</span></td></tr>
+        <tr style="background:rgba(255,77,109,.07)">
+          <td>8</td><td>09/06–15/06</td><td>12/06</td><td>Carlos Kleber / Bispo</td>
+          <td><strong>Nefrectomia EM ONCOLOGIA</strong><br><span style="font-size:10px;color:var(--text3)">P: 1009521/4 · Maria da Conceição Caldeira</span></td>
+          <td><span class="tag b">URO</span></td>
+          <td style="font-size:11px;color:var(--danger)">Sem leito · paciente aguardou e <strong>saiu do sistema voluntariamente</strong></td>
+          <td><span class="tag r">⚠ Paciente perdida</span></td>
+        </tr>
+        <tr><td>9</td><td>10/06–16/06</td><td>10/06</td><td>Rodrigo</td><td>Enteroanastomose (4ª tentativa)<br><span style="font-size:10px;color:var(--text3)">P: 9279951</span></td><td><span class="tag r">Digestiva</span></td><td style="font-size:11px">4ª tentativa consecutiva · mesma causa</td><td><span class="tag r">Frustrada</span></td></tr>
+        <tr><td>10</td><td>16/06–22/06</td><td>15/06</td><td>Carlos Kleber / Bispo</td><td>Prostatectomia EM ONCOLOGIA<br><span style="font-size:10px;color:var(--text3)">P: 0126951/3 · Nicácio de Souza Melo</span></td><td><span class="tag b">URO</span></td><td style="font-size:11px">2ª+ remarcação · sem leito UTI cirúrgico</td><td><span class="tag a">Em aberto</span></td></tr>
+        <tr><td>11</td><td>23/06–29/06</td><td>25/06</td><td>Pedro</td><td>Timectomia EM ONCOLOGIA<br><span style="font-size:10px;color:var(--text3)">Roclezio dos Santos Vieira</span></td><td><span class="tag b">Torácica</span></td><td style="font-size:11px">Aguardando leito UTI pós-op</td><td><span class="tag a">Pendente</span></td></tr>
+        <tr style="font-weight:600;background:rgba(255,77,109,.09)">
+          <td colspan="5" style="color:var(--text)">TOTAL — causa estrutural (falta UTI)</td>
+          <td colspan="3" style="color:var(--danger)">11 casos · 5 especialidades · 1 paciente perdeu acesso</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle">Suspensões por greve — detalhamento (causa temporária)</div>
+    <div class="csub">Voltam ao mapa quando a greve acabar — mas se o leito ainda estiver bloqueado, serão frustradas de novo</div>
+    <table>
+      <thead><tr><th>Semana</th><th>Data</th><th>Cirurgião</th><th>Procedimento</th><th>Especialidade</th><th>Obs.</th></tr></thead>
+      <tbody>
+        <tr><td>31/03–06/04</td><td>31/03</td><td>CIPE / Dênio</td><td>Tireoidectomia Total P:10324754</td><td><span class="tag b">CP</span></td><td style="font-size:11px">ATM anestesista · início da greve</td></tr>
+        <tr><td>31/03–06/04</td><td>01/04</td><td>Bispo / Luccas</td><td>Endometriose P:9689019</td><td><span class="tag b">GO</span></td><td style="font-size:11px">ATM anestesista</td></tr>
+        <tr><td>31/03–06/04</td><td>01/04</td><td>Otorrino</td><td>Sinusotomia P:9670605</td><td><span class="tag b">Otorrino</span></td><td style="font-size:11px">ATM anestesista</td></tr>
+        <tr><td>07/04–13/04</td><td>08/04</td><td>Várias equipes</td><td>CC parado — greve total</td><td><span class="tag gr">–</span></td><td style="font-size:11px">Quarta-feira sem nenhuma cirurgia</td></tr>
+        <tr><td>28/04–04/05</td><td>28/04</td><td>Daniela</td><td>2 VHDs P:9748062 / 9766049</td><td><span class="tag b">GO</span></td><td style="font-size:11px">ATM anestesista · 2 casos</td></tr>
+        <tr><td>12/05–18/05</td><td>13/05</td><td>Otorrino</td><td>Sinusotomia P:5362066</td><td><span class="tag b">Otorrino</span></td><td style="font-size:11px">Suspensa na semana</td></tr>
+        <tr><td>19/05–25/05</td><td>19/05</td><td>Pedro / Vascular</td><td>Toracoscopia por Vídeo</td><td><span class="tag b">Torácica</span></td><td style="font-size:11px">ATM · semana com M=3 anest.</td></tr>
+        <tr><td>19/05–25/05</td><td>19/05</td><td>Vascular</td><td>Cirurgia vascular (não especificada)</td><td><span class="tag b">Vascular</span></td><td style="font-size:11px">ATM anestesista</td></tr>
+        <tr style="font-weight:600;background:rgba(255,179,71,.06)"><td colspan="4" style="color:var(--text)">TOTAL — por greve</td><td colspan="2" style="color:var(--amber)">~12 casos · temporários · resolvidos com retorno anestesia</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ABA 4 — LEITOS UTI
+══════════════════════════════════════════════ -->
+<div class="tsec" id="tab-leitos">
+
+  <div class="krow k4">
+    <div class="kpi d"><div class="kl">Leitos cirúrgicos bloqueados</div><div class="kv">3/4</div><div class="ks">Clínicos em leito pós-op — 26/06/2026</div></div>
+    <div class="kpi d"><div class="kl">Maior bloqueio individual</div><div class="kv">26d</div><div class="ks">Maria Carmem Barros — leito 6A</div></div>
+    <div class="kpi d"><div class="kl">Tempo médio de bloqueio</div><div class="kv">~14d</div><div class="ks">5 pacientes jun/26 · meta proposta: ≤3d</div></div>
+    <div class="kpi t"><div class="kl">Taxa ocupação UTI (mar/26)</div><div class="kv">85%</div><div class="ks">Dentro da meta — qualidade do cuidado é boa</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="ctitle">Status dos 10 leitos UTI adulto — 26/06/2026</div>
+    <div class="csub">4 leitos internos pós-cirúrgicos · 6 leitos SIGAU regulação estadual</div>
+    <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Leitos internos — destinados exclusivamente ao pós-op cirúrgico eletivo</div>
+    <div class="leito-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">
+      <div class="leito inv"><div class="ln">ISOL</div><div class="lp">Maria José da Silva</div><div class="lt clin">Clínico</div><div class="ld">Transferida 25/06</div></div>
+      <div class="leito inv"><div class="ln">5A</div><div class="lp">Tereza da Graça Correia de Souza</div><div class="lt clin">Clínico</div><div class="ld">≥5 dias · dev. 5B CM1</div></div>
+      <div class="leito inv"><div class="ln">6A</div><div class="lp">Maria Carmem Barros da Silva</div><div class="lt clin">Clínico</div><div class="ld" style="color:var(--danger);font-weight:600">26 dias ⚠</div></div>
+      <div class="leito inv"><div class="ln">8A</div><div class="lp">Ana Lúcia Rodrigues dos Santos</div><div class="lt clin">Clínico</div><div class="ld">≥5 dias · aguarda CM1</div></div>
+    </div>
+    <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Leitos SIGAU — regulação estadual (não interferem no pós-op cirúrgico eletivo)</div>
+    <div class="leito-grid" style="grid-template-columns:repeat(6,1fr)">
+      <div class="leito"><div class="ln">1A</div><div class="lp">Luiz Gomes Flor</div><div class="lt sig">SIGAU 01</div></div>
+      <div class="leito"><div class="ln">2A</div><div class="lp">Jose Marcos da Silva</div><div class="lt sig">SIGAU 04</div></div>
+      <div class="leito"><div class="ln">3A</div><div class="lp">Maria Portugal Lima</div><div class="lt sig">SIGAU 06</div></div>
+      <div class="leito"><div class="ln">4A</div><div class="lp">Mariana de Jesus</div><div class="lt sig">SIGAU 02</div></div>
+      <div class="leito"><div class="ln">7A</div><div class="lp">Antonio Ferreira</div><div class="lt sig">SIGAU 05</div></div>
+      <div class="leito"><div class="ln">9A</div><div class="lp">Antonio Carlos dos Santos</div><div class="lt sig">SIGAU 03</div></div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="ctitle">Histórico de invasão clínica — set/2025 a jun/2026</div>
+      <div class="csub">Dias por mês com ≥1 clínico em leito cirúrgico · tendência crescente</div>
+      <div class="cw h220"><canvas id="c_inv_hist"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Pacientes crônicos — leitos cirúrgicos jun/2026</div>
+      <div class="csub">Dias de bloqueio por paciente vs meta ≤72h</div>
+      <table>
+        <thead><tr><th>Paciente</th><th>Leito</th><th>Dias</th><th>Gap vs meta</th><th>DUSV</th></tr></thead>
+        <tbody>
+          <tr><td style="color:var(--text)">Maria Carmem Barros da Silva</td><td>6A</td><td style="color:var(--danger);font-weight:700">26d</td><td style="color:var(--danger)">+23d</td><td><span class="tag a">Incorreto</span></td></tr>
+          <tr><td style="color:var(--text)">Estevão dos Santos Goes</td><td>ISOL</td><td style="color:var(--danger);font-weight:700">22d</td><td style="color:var(--danger)">+19d</td><td><span class="tag a">Atualizado 09/06</span></td></tr>
+          <tr><td style="color:var(--text)">Maria Barboza Santiago Souza</td><td>5A</td><td style="color:var(--danger)">~10d</td><td style="color:var(--danger)">+7d</td><td><span class="tag gr">Pendente</span></td></tr>
+          <tr><td style="color:var(--text)">Tereza da Graça Correia</td><td>5A</td><td style="color:var(--amber)">≥5d</td><td style="color:var(--amber)">+2d</td><td><span class="tag gr">Pendente</span></td></tr>
+          <tr><td style="color:var(--text)">Ana Lúcia Rodrigues dos Santos</td><td>8A</td><td style="color:var(--amber)">≥5d</td><td style="color:var(--amber)">+2d</td><td><span class="tag gr">Pendente</span></td></tr>
+          <tr style="font-weight:600"><td colspan="2">Média jun/26</td><td style="color:var(--danger)">~13,6d</td><td style="color:var(--danger)">+10,6d</td><td><span class="tag r">Meta ≤3d</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ABA 5 — RASTREABILIDADE
+══════════════════════════════════════════════ -->
+<div class="tsec" id="tab-rastreio">
+
+  <div style="background:rgba(255,77,109,.07);border:1px solid rgba(255,77,109,.2);border-radius:10px;padding:14px 18px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.6">
+    <strong style="color:var(--danger)">Problema atual:</strong> quando uma cirurgia com X UTI é suspensa, ela <strong style="color:var(--text)">some do mapa</strong> e só volta se alguém lembrar. Não existe visibilidade de onde está esse paciente. Esta tabela fecha o ciclo. Atualizar toda segunda-feira antes do Bate Mapa.
+  </div>
+
+  <div class="card">
+    <div class="ctitle">Rastreabilidade — pacientes oncológicos com cirurgia suspensa · abr–jun/2026</div>
+    <div class="csub">Atualizar semanalmente · desfecho obrigatório para cada caso · fonte SRAS</div>
+    <div class="scroll" style="max-height:500px">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Mês</th><th>1ª data</th><th>Paciente / Prontuário</th><th>Procedimento</th><th>Espec.</th><th style="text-align:center">Tent.</th><th>Status atual</th><th>Próxima ação / Responsável</th></tr>
+      </thead>
+      <tbody>
+        <tr style="background:rgba(255,77,109,.07)">
+          <td style="color:var(--danger);font-size:15px">★</td>
+          <td><span class="tag r">Mai→Jun</span></td>
+          <td>05/05</td>
+          <td style="color:var(--text);font-weight:600">P: 9279951<br>Rodrigo</td>
+          <td><strong>Enteroanastomose EM ONCOLOGIA</strong></td>
+          <td><span class="tag r">Digestiva</span></td>
+          <td style="text-align:center;color:var(--danger);font-weight:700">4×</td>
+          <td><span class="tag r">Caso crítico aberto</span></td>
+          <td style="font-size:11px;color:var(--danger)">Escalonamento à Direção · Alex/Rodrigo</td>
+        </tr>
+        <tr>
+          <td>1</td><td><span class="tag b">Abr</span></td><td>16/04→23/04</td>
+          <td style="color:var(--text)">P: 4064267<br>Daniela</td>
+          <td>Incontinência Urinária</td><td><span class="tag b">GO</span></td>
+          <td style="text-align:center">2</td>
+          <td><span class="tag g">Realizada 23/04 ✓</span></td>
+          <td style="font-size:11px">Caso encerrado</td>
+        </tr>
+        <tr>
+          <td>2</td><td><span class="tag b">Abr</span></td><td>28/04</td>
+          <td style="color:var(--text)">P: 9748062<br>Daniela</td>
+          <td>VHD (laparoscopia)</td><td><span class="tag b">GO</span></td>
+          <td style="text-align:center">1+</td>
+          <td><span class="tag a">Aguarda remarcação</span></td>
+          <td style="font-size:11px">Contato com Daniela/GO</td>
+        </tr>
+        <tr>
+          <td>3</td><td><span class="tag b">Abr</span></td><td>28/04</td>
+          <td style="color:var(--text)">P: 9766049<br>Daniela</td>
+          <td>VHD (laparoscopia)</td><td><span class="tag b">GO</span></td>
+          <td style="text-align:center">1+</td>
+          <td><span class="tag a">Aguarda remarcação</span></td>
+          <td style="font-size:11px">Contato com Daniela/GO</td>
+        </tr>
+        <tr>
+          <td>4</td><td><span class="tag p">Mai</span></td><td>01/06</td>
+          <td style="color:var(--text)">P: 98973/1<br>Edson de Jesus</td>
+          <td>Retossigmoidectomia EM ONCOLOGIA</td><td><span class="tag r">Digestiva</span></td>
+          <td style="text-align:center">1+</td>
+          <td><span class="tag a">Aguarda vaga UTI</span></td>
+          <td style="font-size:11px">Incluir pós-greve · prioridade alta · Valter</td>
+        </tr>
+        <tr>
+          <td>5</td><td><span class="tag r">Jun</span></td><td>08/06</td>
+          <td style="color:var(--text)">P: 1023634/7<br>João Marcos Bispo dos Santos</td>
+          <td>Tireoidectomia Total EM ONCOLOGIA</td><td><span class="tag b">CP</span></td>
+          <td style="text-align:center">1</td>
+          <td><span class="tag a">Aguarda leito cirúrgico</span></td>
+          <td style="font-size:11px">Contato Isadora/Arli · confirmar data</td>
+        </tr>
+        <tr>
+          <td>6</td><td><span class="tag r">Jun</span></td><td>11/06</td>
+          <td style="color:var(--text)">P: 909162/0<br>Greice Anne Fiel Santos</td>
+          <td>Tireoidectomia c/ Esvaziamento</td><td><span class="tag b">CP</span></td>
+          <td style="text-align:center">1</td>
+          <td><span class="tag a">Pendente remarcação</span></td>
+          <td style="font-size:11px">Contato Isadora/Arli · CP</td>
+        </tr>
+        <tr style="background:rgba(255,77,109,.07)">
+          <td>7</td><td><span class="tag r">Jun</span></td><td>12/06</td>
+          <td style="color:var(--text);font-weight:600">P: 1009521/4<br>Maria da Conceição Caldeira</td>
+          <td><strong>Nefrectomia EM ONCOLOGIA</strong></td><td><span class="tag b">URO</span></td>
+          <td style="text-align:center">1</td>
+          <td><span class="tag r">⚠ Paciente saiu — BUSCA ATIVA</span></td>
+          <td style="font-size:11px;color:var(--danger)">Acionar URO/Carlos Kleber urgente · contato imediato</td>
+        </tr>
+        <tr>
+          <td>8</td><td><span class="tag r">Jun</span></td><td>15/06</td>
+          <td style="color:var(--text)">P: 0126951/3<br>Nicácio de Souza Melo</td>
+          <td>Prostatectomia EM ONCOLOGIA</td><td><span class="tag b">URO</span></td>
+          <td style="text-align:center">2+</td>
+          <td><span class="tag a">Remarcação em aberto</span></td>
+          <td style="font-size:11px">Contato URO/Bispo · 3ª data</td>
+        </tr>
+        <tr>
+          <td>9</td><td><span class="tag r">Jun</span></td><td>25/06</td>
+          <td style="color:var(--text)">Rita de Cássia Santana Santos<br><span style="font-size:10px;color:var(--text3)">P: 1041302/9</span></td>
+          <td>Retossigmoidectomia EM ONCOLOGIA</td><td><span class="tag r">Digestiva</span></td>
+          <td style="text-align:center">1</td>
+          <td><span class="tag r">Não foi p/ UTI no POI</span></td>
+          <td style="font-size:11px;color:var(--danger)">Verificar desfecho clínico urgente · Valter/Pedro</td>
+        </tr>
+        <tr>
+          <td>10</td><td><span class="tag r">Jun</span></td><td>26/06</td>
+          <td style="color:var(--text)">Roclezio dos Santos Vieira</td>
+          <td>Timectomia EM ONCOLOGIA</td><td><span class="tag b">Torácica</span></td>
+          <td style="text-align:center">1</td>
+          <td><span class="tag a">Aguarda data UTI</span></td>
+          <td style="font-size:11px">Contato Pedro · Torácica</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px">
+      <div style="background:rgba(255,77,109,.08);border-radius:8px;padding:12px;text-align:center">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:300;color:var(--danger)">10</div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-top:3px">casos ativos<br>rastreabilidade aberta</div>
+      </div>
+      <div style="background:rgba(255,77,109,.08);border-radius:8px;padding:12px;text-align:center">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:300;color:var(--danger)">1</div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-top:3px">paciente perdeu<br>acesso ao sistema</div>
+      </div>
+      <div style="background:rgba(255,179,71,.08);border-radius:8px;padding:12px;text-align:center">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:300;color:var(--amber)">4</div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-top:3px">especialidades<br>impactadas</div>
+      </div>
+      <div style="background:var(--teal-d);border-radius:8px;padding:12px;text-align:center">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:300;color:var(--teal)">1</div>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.3px;margin-top:3px">caso resolvido<br>P:4064267</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ABA 6 — ANÁLISE AVANÇADA
+══════════════════════════════════════════════ -->
+<div class="tsec" id="tab-analise">
+
+  <div class="grid2" style="margin-bottom:12px">
+    <div class="card">
+      <div class="ctitle">② Tempo médio de bloqueio vs meta proposta</div>
+      <div class="csub">Proposta de indicador para NUCAAR — meta ≤72h com notificação automática</div>
+      <div class="cw h200"><canvas id="c_bloqueio"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="ctitle">③ Giro de leito cirúrgico — real vs potencial</div>
+      <div class="csub">Capacidade instalada desperdiçada pelo bloqueio clínico</div>
+      <div style="margin-top:10px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div style="background:var(--bg3);border-radius:8px;padding:14px;text-align:center">
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Capacidade plena<br>4 leitos livres</div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:300;color:var(--teal)">60</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:3px">cirurgias UTI/mês possíveis<br>(TMed pós-op = 2 dias)</div>
+          </div>
+          <div style="background:var(--bg3);border-radius:8px;padding:14px;text-align:center">
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Realidade jun/26<br>~1 leito livre</div>
+            <div style="font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:300;color:var(--danger)">15</div>
+            <div style="font-size:11px;color:var(--text2);margin-top:3px">cirurgias UTI/mês possíveis<br>com 3 leitos bloqueados</div>
+          </div>
+        </div>
+        <div style="background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:5px">
+            <span style="color:var(--teal)">Realizado (25%)</span>
+            <span style="color:var(--danger)">Perdido (75%)</span>
+          </div>
+          <div style="position:relative;height:8px;background:rgba(255,77,109,.25);border-radius:4px;overflow:hidden">
+            <div style="position:absolute;left:0;top:0;height:100%;width:25%;background:var(--teal);border-radius:4px"></div>
+          </div>
+        </div>
+        <div class="box g" style="margin:0">
+          <div class="bt">O problema não é qualidade — é fluxo</div>
+          <div class="bd">TMed pós-op cirúrgico = 2 dias ✓ (dentro da meta). O cuidado dentro da UTI é bom. O bloqueio é de entrada, não de saída.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:12px">
+    <div class="ctitle">⑤ Correlação: anestesistas disponíveis vs cirurgias UTI realizadas</div>
+    <div class="csub">Pergunta: o gargalo é o anestesista ou o leito? · dados reais dos bate mapas</div>
+    <div class="grid3" style="margin-top:10px;margin-bottom:0">
+      <div style="background:var(--bg3);border-radius:8px;padding:16px;text-align:center">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Dias com M ≥ 5 anest.</div>
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:300;color:var(--blue)">2,4</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:3px">UTIs realizadas/dia em média</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:16px;text-align:center">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Dias com M = 3–4 anest.</div>
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:300;color:var(--amber)">2,0</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:3px">UTIs realizadas/dia em média</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:16px;text-align:center">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Diferença M=5 vs M=3</div>
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:300;color:var(--teal)">+0,4</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:3px">cirurgias UTI/dia a mais</div>
+      </div>
+    </div>
+    <div class="box g" style="margin-top:12px;margin-bottom:0">
+      <div class="bt">Conclusão: o gargalo é o leito, não o anestesista</div>
+      <div class="bd">Dobrar o número de anestesistas acrescentaria menos de meia cirurgia UTI por dia. Recuperar os 4 leitos cirúrgicos acrescentaria 3–4 cirurgias UTI por dia. O leito tem impacto 6–8× maior do que a escala de anestesia.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle">④ Gap de capacidade instalada — argumento para a Direção e EBSERH</div>
+    <div class="csub">Comparativo entre o que o HU-SE pode fazer e o que está fazendo</div>
+    <div class="grid3" style="margin-top:10px">
+      <div style="background:var(--bg3);border-radius:8px;padding:14px;text-align:center">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Capacidade plena<br>sem greve, sem bloqueio</div>
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:34px;font-weight:300;color:var(--teal)">~60</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:3px">cirurgias UTI/mês</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:14px;text-align:center">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Realizado médio<br>jan–mar/2026</div>
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:34px;font-weight:300;color:var(--amber)">~25</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:3px">cirurgias UTI/mês efetivas</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:14px;text-align:center">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Gap mensal perdido</div>
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:34px;font-weight:300;color:var(--danger)">~35</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:3px">cirurgias não realizadas/mês</div>
+      </div>
+    </div>
+    <div class="box a" style="margin-top:12px;margin-bottom:0">
+      <div class="bt">Argumento para EBSERH — custo zero, impacto imediato</div>
+      <div class="bd">O HU-SE possui capacidade instalada para 60 cirurgias de grande porte/mês com seus 4 leitos UTI pós-cirúrgicos. Está realizando ~25 (42%). O delta de 35 cirurgias/mês é pacientes oncológicos esperando na fila. A solução está dentro do hospital: protocolo de fluxo com CM1/CMI, custo R$0.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════
+     ABA 7 — PLANO DE AÇÃO
+══════════════════════════════════════════════ -->
+<div class="tsec" id="tab-acoes">
+
+  <div style="background:linear-gradient(135deg,rgba(0,212,170,.08),rgba(74,158,255,.05));border:1px solid rgba(0,212,170,.2);border-radius:10px;padding:20px 24px;text-align:center;margin-bottom:16px">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:8px">Argumento para a direção — em uma frase</div>
+    <div style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:400;color:var(--text);line-height:1.4">
+      Não precisamos de mais leitos de UTI.<br>
+      <span style="color:var(--teal)">Precisamos recuperar os 4 que já temos.</span>
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-top:10px">Custo da solução: R$ 0 · 13 casos oncológicos aguardando · 1 paciente já saiu do sistema</div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle">Plano de ação — por prazo e responsável</div>
+    <table>
+      <thead><tr><th>Prazo</th><th>Ação</th><th>Responsável</th><th>Indicador de resultado</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tag r">Hoje</span></td><td><strong>Busca ativa urgente</strong> · Maria da Conceição Caldeira (P:1009521/4) · nefrectomia oncológica · paciente saiu do sistema</td><td>SRAS + URO/Carlos Kleber</td><td>Paciente localizada e reagendada</td></tr>
+        <tr><td><span class="tag r">Hoje</span></td><td>Regularizar DUSV dos clínicos em leitos cirúrgicos ativos: Tereza (5A), Ana Lúcia (8A), Maria Carmem (6A)</td><td>SRAS</td><td>DUSV correto em todos os leitos</td></tr>
+        <tr><td><span class="tag r">Esta semana</span></td><td>Criar fluxo formal de devolução com CM1/CMI: prazo ≤72h, chefia assina, notificação automática ao SRAS</td><td>SRAS + GAS + Dir. Clínica</td><td>Liberação de ≥2 leitos cirúrgicos imediata</td></tr>
+        <tr><td><span class="tag r">Esta semana</span></td><td>Apresentar este painel à Direção com os 10 casos oncológicos rastreados e o caso da paciente perdida</td><td>SRAS (Thais)</td><td>Decisão institucional formalizada</td></tr>
+        <tr><td><span class="tag a">2 semanas</span></td><td>Incluir coluna "leito UTI cirúrgico disponível" no Bate Mapa semanal — status de cada leito no cabeçalho</td><td>SRAS + CC</td><td>Visibilidade semanal antes do mapa ser publicado</td></tr>
+        <tr><td><span class="tag a">Antes da greve acabar</span></td><td>Pré-mapear os 10 casos oncológicos com cirurgia suspensa para alocação prioritária de leito UTI pós-greve</td><td>SRAS</td><td>Lista de prioridade pronta · zero fila represada</td></tr>
+        <tr><td><span class="tag b">1 mês</span></td><td>Formalizar protocolo de cessão de leito em portaria interna com aprovação da Direção Clínica</td><td>Dir. Clínica</td><td>Portaria publicada e distribuída a CM1/CMI/UTI</td></tr>
+        <tr><td><span class="tag b">1 mês</span></td><td>Implantar indicador mensal NUCAAR: "TMed permanência clínico em leito cirúrgico UTI — meta ≤72h"</td><td>SRAS + NUCAAR</td><td>Indicador monitorado retroativo de jan/2026</td></tr>
+        <tr><td><span class="tag gr">Trimestral</span></td><td>Propor à EBSERH formalização de critério objetivo para cessão de leito cirúrgico — 1 leito misto regulado</td><td>SRAS + NUCAAR + Dir. Geral</td><td>Proposta submetida ao CONSU/EBSERH</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid2">
+    <div class="box r">
+      <div class="bt">Risco pós-greve — ação imediata necessária</div>
+      <div class="bd">Quando a greve acabar, as 12 cirurgias suspensas voltarão ao mapa ao mesmo tempo que a demanda normal. Se os leitos UTI ainda estiverem bloqueados, a taxa de suspensão cirúrgica vai saltar para estimados 25–30%. Isso significa <strong style="color:var(--danger)">zero pontos</strong> no indicador contratual de suspensão cirúrgica — perda garantida na contratualização.</div>
+    </div>
+    <div class="box g">
+      <div class="bt">O que já está funcionando — manter</div>
+      <div class="bd">A UTI do HU-SE tem excelentes indicadores internos: ICSAC CVC = 0,0 · infecção cirurgia limpa = 0,00% · LP UTI = 0,54% · TMed pós-op cirúrgico = 2 dias. O problema é de <strong style="color:var(--teal)">acesso e fluxo</strong>, não de qualidade do cuidado prestado dentro da UTI.</div>
+    </div>
+  </div>
+
+</div>
+</div><!-- fim .main -->
+
+<footer class="footer">
+  <p>HU-SE · SRAS — Setor de Regulação, Avaliação e Saúde · Hospital Universitário de Sergipe / EBSERH · Elaborado: Thais Oliveira Santos Alves · 26/06/2026</p>
+  <p>Fontes: Bate Mapas CC 31/03–29/06/2026 · Censo Diário UTI jun/2026 · Monitoramento SRAS set/25–jun/26</p>
+</footer>
+
+<script>
+Chart.defaults.color='#94A3B8';
+Chart.defaults.borderColor='rgba(255,255,255,0.06)';
+Chart.defaults.font.family="'Inter',sans-serif";
+Chart.defaults.font.size=11;
+const T='#00D4AA',D='#FF4D6D',A='#FFB347',B='#4A9EFF',P='#A78BFA';
+const G='rgba(255,255,255,0.06)';
+
+const SEMANAS=['31/03','07/04','14/04','21/04','28/04','05/05','12/05','19/05','26/05','09/06','16/06','23/06'];
+const PLAN=   [5,      3,      5,      3,      6,      3,      8,      3,      8,      4,      5,      3];
+const REAL=   [2,      2,      4,      3,      4,      2,      6,      2,      7,      0,      4,      3];
+const GREVE=  [2,      1,      0,      0,      2,      0,      1,      1,      0,      0,      0,      0];
+const SUTHI=  [1,      0,      1,      0,      0,      1,      1,      0,      1,      4,      1,      0];
+
+function st(id){
+  const ids=['resumo','semanas','suspensoes','leitos','rastreio','analise','acoes'];
+  document.querySelectorAll('.tbtn').forEach((b,i)=>b.classList.toggle('on',ids[i]===id));
+  document.querySelectorAll('.tsec').forEach(s=>s.classList.remove('on'));
+  document.getElementById('tab-'+id).classList.add('on');
+  setTimeout(()=>draw(id),80);
+}
+
+const done={};
+function draw(id){
+  if(done[id])return; done[id]=true;
+
+  if(id==='resumo'){
+    new Chart(document.getElementById('c_res_sem'),{
+      type:'bar',
+      data:{labels:SEMANAS,datasets:[
+        {label:'Planejadas',data:PLAN,backgroundColor:B+'30',borderColor:B,borderWidth:1.5,borderRadius:3},
+        {label:'Realizadas',data:REAL,backgroundColor:T+'45',borderColor:T,borderWidth:1.5,borderRadius:3},
+        {label:'Susp. greve',data:GREVE,backgroundColor:D+'55',borderColor:D,borderWidth:1.5,borderRadius:3},
+        {label:'Susp. sem UTI',data:SUTHI,backgroundColor:A+'65',borderColor:A,borderWidth:1.5,borderRadius:3}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{mode:'index',intersect:false}},
+        scales:{x:{ticks:{maxRotation:45,font:{size:9}},grid:{display:false}},
+          y:{ticks:{stepSize:2,precision:0},grid:{color:G}}}}
+    });
+    new Chart(document.getElementById('c_pizza'),{
+      type:'doughnut',
+      data:{labels:['Realizadas (67%)','Susp. greve (14%)','Susp. sem leito UTI (13%)','Outros (6%)'],
+        datasets:[{data:[58,12,11,6],
+          backgroundColor:[T,D,A,'#475569'],
+          borderWidth:2,borderColor:'#111827',hoverOffset:8}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
+        plugins:{legend:{display:true,position:'bottom',labels:{font:{size:10},color:'#94A3B8',padding:10,boxWidth:10}}}}
+    });
+  }
+
+  if(id==='semanas'){
+    new Chart(document.getElementById('c_uti_sem'),{
+      type:'bar',
+      data:{labels:SEMANAS,
+        datasets:[{label:'Suspensas por falta UTI',data:SUTHI,
+          backgroundColor:SUTHI.map(v=>v>=4?D+'90':v>=2?A+'80':A+'50'),
+          borderColor:SUTHI.map(v=>v>=4?D:A),borderWidth:1.5,borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},
+          annotation:{annotations:{line1:{type:'line',yMin:.5,yMax:.5,borderColor:'rgba(255,255,255,.2)',borderWidth:1,borderDash:[4,4]}}}},
+        scales:{x:{ticks:{maxRotation:45,font:{size:9}},grid:{display:false}},
+          y:{ticks:{stepSize:1,precision:0},grid:{color:G},
+            title:{display:true,text:'casos',color:'#64748B',font:{size:10}}}}}
+    });
+    new Chart(document.getElementById('c_greve_sem'),{
+      type:'bar',
+      data:{labels:SEMANAS,
+        datasets:[{label:'Suspensas por greve',data:GREVE,
+          backgroundColor:GREVE.map(v=>v>=2?D+'70':D+'40'),
+          borderColor:D,borderWidth:1.5,borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{x:{ticks:{maxRotation:45,font:{size:9}},grid:{display:false}},
+          y:{ticks:{stepSize:1,precision:0},grid:{color:G},
+            title:{display:true,text:'casos',color:'#64748B',font:{size:10}}}}}
+    });
+  }
+
+  if(id==='leitos'){
+    const meses=['Set/25','Out/25','Nov/25','Dez/25','Jan/26','Fev/26','Mar/26','Jun/26'];
+    const dias=  [0,       2,       9,       7,       7,       8,       3,       20];
+    new Chart(document.getElementById('c_inv_hist'),{
+      type:'bar',
+      data:{labels:meses,datasets:[{label:'Dias c/ clínico em leito cirúrgico',data:dias,
+        backgroundColor:dias.map((v,i)=>i===7?D+'80':v>5?A+'70':T+'40'),
+        borderColor:dias.map((v,i)=>i===7?D:v>5?A:T),borderWidth:1.5,borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+        scales:{x:{ticks:{font:{size:9}},grid:{display:false}},
+          y:{ticks:{stepSize:5},grid:{color:G},
+            title:{display:true,text:'dias/mês',color:'#64748B',font:{size:10}}}}}
+    });
+  }
+
+  if(id==='analise'){
+    // Bloqueio por paciente
+    new Chart(document.getElementById('c_bloqueio'),{
+      type:'bar',
+      data:{
+        labels:['Maria Carmem','Estevão','Maria Barboza','Tereza','Ana Lúcia'],
+        datasets:[
+          {label:'Dias bloqueados',data:[26,22,10,5,5],backgroundColor:D+'50',borderColor:D,borderWidth:1.5,borderRadius:4},
+          {label:'Meta (3 dias)',data:[3,3,3,3,3],backgroundColor:T+'30',borderColor:T,borderWidth:1,borderRadius:4}
+        ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:true,position:'bottom',labels:{font:{size:10},color:'#94A3B8',padding:8,boxWidth:10}}},
+        scales:{x:{ticks:{font:{size:9}},grid:{display:false}},
+          y:{ticks:{stepSize:5},grid:{color:G},
+            title:{display:true,text:'dias',color:'#64748B',font:{size:10}}}}}
+    });
+  }
+}
+
+draw('resumo');
+</script>
+</body>
+</html>
